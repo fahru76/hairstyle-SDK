@@ -2,6 +2,13 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (10)
+
+- Populated `data/wigs/` with a small starter library for a men's barbershop app: `wig_crew_cut`, `wig_pompadour`, `wig_undercut` (plus the existing `wig_bob_test`), via new `data/wigs/generate_wig_library.py`. All share the exact same anchor-point scheme as the original bob test asset (same virtual face template), so any of them works as a drop-in `WIG_PNG_PATH`/`WIG_CSV_PATH` swap in `wig_overlay.py` with no other changes.
+- These are **procedural placeholder silhouettes**, same caveat as the bob asset — geometric shapes (ring, ring+quiff bump, top-only cap) for exercising the pipeline with variety, not photorealistic hairstyle renders. Visually they'll read as caps, not haircuts.
+- Not yet tested through `wig_overlay.py` on real webcam footage (only visually previewed as flat PNGs) — next step is to swap `WIG_PNG_PATH` to each new style and confirm the pipeline handles the different silhouette shapes/sizes without issues (e.g. undercut's cap doesn't extend to the temple anchors at all, worth confirming that doesn't break the homography).
+- README's status table and known-limitations section updated to match current reality (hair removal is implemented, not a TODO; wig library documented).
+
 ## 2026-09-07 (9)
 
 - Tuned hair-removal constants using `tune_hair_removal.py` on real webcam footage. New values in `wig_overlay.py`: `HAIR_MASK_THRESHOLD = 0.26` (down from 0.5 -- the untuned guess was apparently too strict for this camera/lighting/hair color, missing real hair), `HAIR_MASK_DILATE_PX = 7`, `INPAINT_RADIUS = 9`, method stays Telea. These are fit to one test setup (one camera, one lighting condition, black hair) -- re-tune if any of those change enough to look wrong.

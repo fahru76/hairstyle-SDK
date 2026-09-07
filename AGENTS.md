@@ -13,7 +13,7 @@ AR hairstyle try-on for an online barbershop app. Two distinct capabilities, don
 
 - `src/hair_color/` — complete, confirmed working on real hardware.
 - `src/wig_overlay/` — landmark picker → asset annotator → runtime overlay, combined with `hair_segmenter` so real hair is masked out (via `cv2.inpaint`) before the wig PNG is blended on top. **Confirmed working end-to-end on real webcam footage** — stable tracking, clean hair removal, correct hairline anchoring. What's untested: real hairstyle assets (only the placeholder exists), inpaint quality on long/complex hair, and performance under sustained use.
-- `data/wigs/` — has one placeholder procedurally-generated bob-shape test asset (`wig_bob_test.png` / `.csv`, via `generate_sample_wig.py`) for exercising the pipeline before sourcing real hairstyle assets. Visually it reads as a "swim cap" on real footage since it's just a ring shape, not an actual rendered hairstyle — that's expected, it did its job of validating the pipeline.
+- `data/wigs/` — has a small library of placeholder procedurally-generated assets: `wig_bob_test` (via `generate_sample_wig.py`), plus `wig_crew_cut` / `wig_pompadour` / `wig_undercut` (via `generate_wig_library.py`). All share one anchor-point scheme (same virtual face template) so they're interchangeable as `WIG_PNG_PATH`/`WIG_CSV_PATH` in `wig_overlay.py`. Visually they read as caps/rings on real footage, not actual hairstyles — expected, they're for pipeline testing, not final assets. Only `wig_bob_test` has been run through `wig_overlay.py` on real footage so far; the other three are untested beyond a flat-PNG preview.
 
 ## Design decisions worth knowing before you change things
 
