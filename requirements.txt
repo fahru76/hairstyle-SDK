@@ -1,3 +1,7 @@
+# mediapipe (as of its latest release, 1.0.1) only ships wheels for
+# Python 3.9-3.12 -- there is NO Python 3.13+ wheel yet (upstream issue:
+# google-ai-edge/mediapipe#6159). If `pip install` fails on your machine,
+# check `python --version` first -- use 3.12 or earlier.
 mediapipe>=0.10.14
 opencv-python>=4.9.0
 numpy>=1.26.0

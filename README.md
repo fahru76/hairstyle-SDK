@@ -43,6 +43,15 @@ hairstyle-SDK/
         └── wig_overlay.py         # runtime: homography warp + blend wig onto webcam feed
 ```
 
+## Python version
+
+Requires **Python 3.9–3.12**. `mediapipe` (currently at 1.0.1 on PyPI) does not
+yet ship wheels for Python 3.13+ (tracked upstream: [google-ai-edge/mediapipe#6159](https://github.com/google-ai-edge/mediapipe/issues/6159)).
+If `pip install -r requirements.txt` fails with a "no matching distribution"
+error for mediapipe, check `python --version` — install 3.12 or earlier.
+This repo's own code has been checked against mediapipe 1.0.1's API and works
+unchanged; the ceiling is entirely on mediapipe's side, not this repo.
+
 ## Quick start
 
 ```bash

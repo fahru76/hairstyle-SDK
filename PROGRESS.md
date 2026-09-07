@@ -2,6 +2,17 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (11)
+
+- **Full codebase audit for "latest Python version + remove all bugs"** — all 8 `.py` files reviewed line-by-line, plus static analysis (`pyflakes`, clean across the board) and dependency checks:
+  - No logic bugs found beyond the hairline scan-direction bug already caught and fixed in entries (4)/(5)/(6) above.
+  - No deprecated numpy aliases (`np.bool`/`np.int`/etc.) or removed-in-3.12 stdlib modules (`distutils`/`imp`) anywhere in the repo.
+  - mediapipe's latest release (1.0.1, up from the `>=0.10.14` pin) was installed in a test environment and its Tasks-API surface (`ImageSegmenterOptions`, `FaceLandmarkerOptions`, `RunningMode`, `BaseOptions`, `mp.Image`, `mp.ImageFormat.SRGB`) was confirmed import-compatible and unchanged from what this repo already uses — **no code migration needed**.
+  - **External constraint found (not a bug in this repo)**: mediapipe does not publish Python 3.13+ wheels yet — confirmed via the 1.0.1 wheel's PyPI metadata (`Programming Language :: Python :: 3.9`–`3.12` only) and a live upstream issue (google-ai-edge/mediapipe#6159). `pip install` will fail on Python 3.13/3.14 regardless of anything in this repo, until mediapipe ships those wheels.
+  - Non-critical observation (not acted on): `wig_overlay.py`'s `cv2.findHomography` uses ordinary least-squares (`method=0`), no RANSAC outlier rejection — fine given points come from tracked landmarks (no noisy correspondences to reject), but worth revisiting if a future anchor scheme introduces less-reliable points.
+- Changes made: `requirements.txt` and `README.md` now explicitly document the Python 3.9–3.12 ceiling so `pip install` failures on newer Python installs are self-explanatory instead of confusing.
+- Net result: codebase itself needed **no bug fixes** this round — it was already clean going into this audit (thanks to the earlier hairline-bug fix cycle). The only real finding is the mediapipe/Python-version ceiling, which is documented, not fixed (it can't be fixed from this repo).
+
 ## 2026-09-07 (10)
 
 - Populated `data/wigs/` with a small starter library for a men's barbershop app: `wig_crew_cut`, `wig_pompadour`, `wig_undercut` (plus the existing `wig_bob_test`), via new `data/wigs/generate_wig_library.py`. All share the exact same anchor-point scheme as the original bob test asset (same virtual face template), so any of them works as a drop-in `WIG_PNG_PATH`/`WIG_CSV_PATH` swap in `wig_overlay.py` with no other changes.
