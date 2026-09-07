@@ -1,0 +1,23 @@
+# models (large binaries, downloaded via models/download_models.sh)
+*.tflite
+*.task
+models/*.tflite
+models/*.task
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# generated output
+*.jpg
+*.png
+!data/wigs/**/*.png
+landmarks_check.jpg
+output_hair_color.jpg
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/
