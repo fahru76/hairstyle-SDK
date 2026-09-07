@@ -2,6 +2,10 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (9)
+
+- Tuned hair-removal constants using `tune_hair_removal.py` on real webcam footage. New values in `wig_overlay.py`: `HAIR_MASK_THRESHOLD = 0.26` (down from 0.5 -- the untuned guess was apparently too strict for this camera/lighting/hair color, missing real hair), `HAIR_MASK_DILATE_PX = 7`, `INPAINT_RADIUS = 9`, method stays Telea. These are fit to one test setup (one camera, one lighting condition, black hair) -- re-tune if any of those change enough to look wrong.
+
 ## 2026-09-07 (8)
 
 - Added `src/wig_overlay/tune_hair_removal.py` — interactive webcam tool (OpenCV trackbars) to tune the hair-removal step live: threshold, dilate px, inpaint radius, inpaint method (Telea/NS), shown side by side as [original | mask | inpainted]. Press 'p' to print current values to paste into `wig_overlay.py`'s constants. The original `HAIR_MASK_THRESHOLD`/`HAIR_MASK_DILATE_PX`/`INPAINT_RADIUS` in `wig_overlay.py` were unverified guesses; this replaces "edit constants blind, re-run, repeat" with immediate visual feedback.

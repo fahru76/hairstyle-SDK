@@ -63,13 +63,14 @@ HAIR_MODEL_PATH = os.path.join(
 WIG_PNG_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "wigs", "wig_bob_test.png")
 WIG_CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "wigs", "wig_bob_test.csv")
 
-# Hair-removal tuning
-HAIR_MASK_THRESHOLD = 0.5   # confidence above this counts as "hair" to remove
-HAIR_MASK_DILATE_PX = 6     # grow the mask a bit so hair edges are fully covered
-INPAINT_RADIUS = 8          # cv2.inpaint neighborhood radius
+# Hair-removal tuning -- found interactively with tune_hair_removal.py
+# on real webcam footage (2026-09-07), see PROGRESS.md.
+HAIR_MASK_THRESHOLD = 0.26  # confidence above this counts as "hair" to remove
+HAIR_MASK_DILATE_PX = 7     # grow the mask a bit so hair edges are fully covered
+INPAINT_RADIUS = 9          # cv2.inpaint neighborhood radius
 INPAINT_METHOD = cv2.INPAINT_TELEA  # or cv2.INPAINT_NS -- see tune_hair_removal.py
-# ^ these 4 were unverified guesses; use tune_hair_removal.py to find good
-# values interactively on your own footage rather than editing blind.
+# Re-tune with tune_hair_removal.py if lighting/camera/hair changes enough
+# that these stop looking right -- they're fit to one test setup, not universal.
 
 # Hairline-correction tuning (see find_hairline_y() and pick_landmarks.py)
 HAIRLINE_OVERRIDE_IDS = {10, 109, 338}   # landmark IDs whose Y gets replaced
