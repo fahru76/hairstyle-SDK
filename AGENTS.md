@@ -12,7 +12,8 @@ AR hairstyle try-on for an online barbershop app. Two distinct capabilities, don
 ## Current state (see PROGRESS.md for the live log)
 
 - `src/hair_color/` — complete and testable once models are downloaded.
-- `src/wig_overlay/` — three-script skeleton (landmark picker → asset annotator → runtime overlay). NOT yet combined with hair segmentation, so real hair is not removed/hidden before the wig is placed — this will look wrong if the user's real hair pokes out from under the overlay. That's the next planned step, see PROGRESS.md.
+- `src/wig_overlay/` — landmark picker → asset annotator → runtime overlay, now combined with `hair_segmenter` so real hair is masked out (via `cv2.inpaint`) before the wig PNG is blended on top. Untested on real hardware (no webcam/mediapipe in the sandbox this was written in) — see PROGRESS.md for what still needs verification.
+- `data/wigs/` — has one placeholder procedurally-generated bob-shape test asset (`wig_bob_test.png` / `.csv`, via `generate_sample_wig.py`) for exercising the pipeline before sourcing real hairstyle assets.
 
 ## Design decisions worth knowing before you change things
 
@@ -20,6 +21,7 @@ AR hairstyle try-on for an online barbershop app. Two distinct capabilities, don
 - **Landmark IDs for hairline/temple anchors** (`CANDIDATE_IDS` in `pick_landmarks.py`) are **not verified ground truth** — they're community-sourced starting points. MediaPipe's face mesh is sparsest exactly in the hairline region. Always re-verify visually against `landmarks_check.jpg` before trusting them, especially if you change which anchor points are used.
 - **Homography, not full mesh warp**: `wig_overlay.py` uses `cv2.findHomography` (planar, rigid-ish). This is a known simplification — good enough for near-frontal poses, breaks down on extreme head tilt. If accuracy needs to improve, look at Delaunay triangulation + piecewise affine warp (see README for a reference link) before reaching for something heavier.
 - **Recoloring math**: HSV Hue+Saturation blend toward target, Value channel untouched — this is deliberate, it's what keeps recolored hair looking like real hair instead of a flat color fill.
+- **Real-hair removal**: `wig_overlay.py` now runs `hair_segmenter` every frame too (not just `face_landmarker`), thresholds the confidence mask, dilates it slightly (`HAIR_MASK_DILATE_PX`) so edges are fully covered, and fills it with `cv2.inpaint` (Telea algorithm) before the wig is warped on. This is a generic fill, not scene-aware — it doesn't know an ear or shirt collar is under there, so quality will vary. Running two models + inpaint per frame is noticeably heavier than either alone; if FPS is a problem, downscaling the frame before segmentation or switching to VIDEO running mode are the first things to try (see Next steps).
 
 ## What NOT to do
 
@@ -29,7 +31,9 @@ AR hairstyle try-on for an online barbershop app. Two distinct capabilities, don
 
 ## Next steps (also tracked in PROGRESS.md)
 
-1. Combine `hair_segmenter` mask into `wig_overlay.py` so real hair is masked out before the wig PNG is blended on top.
-2. Build out a small asset library in `data/wigs/` (a handful of styles + their CSVs) to prove the pipeline end-to-end.
-3. Evaluate VIDEO running mode (vs per-frame IMAGE mode) for better real-time performance.
-4. Consider Delaunay-triangulation warp as a follow-up if homography-only quality isn't good enough.
+1. Test the full pipeline (`recolor_*`, `wig_overlay.py`) on real hardware with mediapipe/opencv/webcam — none of this has been executed anywhere yet.
+2. Verify hairline/temple landmark IDs visually with `pick_landmarks.py` on a real face before trusting `wig_overlay.py`'s alignment.
+3. Replace the placeholder test asset (`wig_bob_test.*`) with real hairstyle assets; build out a small library in `data/wigs/`.
+4. Tune/evaluate the `cv2.inpaint`-based hair removal quality on real footage — threshold, dilation, and inpaint radius constants in `wig_overlay.py` were chosen without empirical testing.
+5. Evaluate VIDEO running mode (vs per-frame IMAGE mode) for better real-time performance, especially now that two models run per frame.
+6. Consider Delaunay-triangulation warp as a follow-up if homography-only quality isn't good enough.

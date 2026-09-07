@@ -2,7 +2,13 @@
 
 Running status log. Newest entries on top.
 
-## 2026-09-07
+## 2026-09-07 (2)
+
+- `src/wig_overlay/wig_overlay.py` now removes real hair before blending the wig: runs `hair_segmenter` each frame alongside `face_landmarker`, thresholds + dilates the confidence mask, and fills it with `cv2.inpaint` (Telea). Tunable via `HAIR_MASK_THRESHOLD`, `HAIR_MASK_DILATE_PX`, `INPAINT_RADIUS` constants at the top of the file.
+- Added `data/wigs/wig_bob_test.png` + `.csv` — a procedurally generated placeholder bob-silhouette asset (see `data/wigs/generate_sample_wig.py`) so the overlay pipeline has something to run against before a real hairstyle asset is sourced. `wig_overlay.py`'s defaults now point at this test asset.
+- Still **not executed on real hardware** — no mediapipe/opencv/webcam in the sandboxes this was written in. Everything below is unverified until run.
+
+## 2026-09-07 (1)
 
 - Repo rebuilt/pushed to `github.com/fahru76/hairstyle-SDK` (previous scaffolding was written in a throwaway session sandbox and never made it to git).
 - Added: README, AGENTS.md, requirements.txt, .gitignore, LICENSE, models/README + download script, `src/hair_color/` (recolor_image.py, recolor_webcam.py), `src/wig_overlay/` (pick_landmarks.py, annotate_asset.py, wig_overlay.py), `data/wigs/.gitkeep`.
@@ -12,9 +18,9 @@ Running status log. Newest entries on top.
 
 - [ ] Test `recolor_image.py` / `recolor_webcam.py` on a real machine with mediapipe + opencv installed.
 - [ ] Verify hairline/temple landmark IDs visually with `pick_landmarks.py` before trusting `wig_overlay.py`.
-- [ ] Combine `hair_segmenter` output into `wig_overlay.py` to mask out real hair before blending the wig PNG (currently the overlay just draws on top — real hair can show through the edges).
-- [ ] Populate `data/wigs/` with at least one real test asset + CSV to validate the end-to-end pipeline.
-- [ ] Decide on VIDEO vs IMAGE running mode for webcam performance tuning.
+- [ ] Test the new hair-removal step in `wig_overlay.py` on real webcam footage — tune threshold/dilate/inpaint-radius constants against what actually looks right, current values are unverified guesses.
+- [ ] Check real-time FPS with two models + inpaint running per frame; downscale-before-segment or VIDEO running mode if it's too slow.
+- [ ] Replace `wig_bob_test.png` placeholder with a real hairstyle asset (or a small library of them) once the pipeline itself is confirmed working.
 - [ ] Longer-term: evaluate Delaunay triangulation + piecewise warp if homography-only overlay quality isn't sufficient for shipping.
 
 ## Background
