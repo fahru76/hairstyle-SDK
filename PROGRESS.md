@@ -2,6 +2,12 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (6)
+
+- **Hairline fix confirmed working on real photo**: re-ran `pick_landmarks.py` after the scan-direction fix -- blue (corrected) points now land right at the actual hair/forehead boundary, matching visually. Hairline anchor logic is now considered solid.
+- Anchor points fully validated: hairline (10/109/338, mask-corrected) ✅, temple (127/356) ✅, chin (152) ✅. All 6 anchors used by `wig_overlay.py` are now confirmed accurate on a real face.
+- Next: run `wig_overlay.py` end-to-end (webcam) with the placeholder bob asset and see how the actual warp + wig placement + hair removal looks together.
+
 ## 2026-09-07 (5)
 
 - **Bug found in the hairline fix itself, from testing the fix**: after (4) below, `pick_landmarks.py` output showed the "corrected" blue points landing at the very top of the head (crown), not the hairline. Root cause: `find_hairline_y()` scanned from the TOP of the image downward for the first hair-covered row -- that finds the crown (topmost point of the whole hair region), not the hairline (the boundary between hair and forehead skin).
