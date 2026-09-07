@@ -2,6 +2,12 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (5)
+
+- **Bug found in the hairline fix itself, from testing the fix**: after (4) below, `pick_landmarks.py` output showed the "corrected" blue points landing at the very top of the head (crown), not the hairline. Root cause: `find_hairline_y()` scanned from the TOP of the image downward for the first hair-covered row -- that finds the crown (topmost point of the whole hair region), not the hairline (the boundary between hair and forehead skin).
+- Fix: scan the other direction -- start at the raw landmark's Y (known to sit in forehead skin) and move UPWARD until hitting the first hair-covered row. That's the actual hairline boundary. Function signature changed to `find_hairline_y(mask, x, start_y, band=...)` in both `pick_landmarks.py` and `wig_overlay.py`.
+- Verified with a synthetic-mask unit test (couldn't re-run against a real photo -- `storage.googleapis.com` isn't reachable from this sandbox to download models) confirming the new logic returns the hair/skin boundary correctly instead of row 0. **Still needs re-verification against a real photo** via `pick_landmarks.py` -- do this before trusting `wig_overlay.py` again.
+
 ## 2026-09-07 (4)
 
 - **Found + fixed a real bug via testing**: `pick_landmarks.py` output on a real photo showed landmarks 10/109/338 sitting clearly mid-forehead, not at the hairline (visible gap between the red dots and where hair actually starts). Root cause: MediaPipe's face mesh doesn't extend into hair-covered area at all — landmark 10 is a fixed anatomical proportion relative to eyes/eyebrows, not a hairline detection, so it's systematically off for any forehead height that differs from the model's template. Temple (127/356) and chin (152) were confirmed accurate in the same test.

@@ -57,23 +57,36 @@ HAIRLINE_SEARCH_BAND_PX = 6      # how wide a column to scan around x
 HAIRLINE_MIN_ROW_COVERAGE = 0.6  # fraction of the band that must be "hair" to count as the hairline row
 
 
-def find_hairline_y(hair_mask_binary, x, band=HAIRLINE_SEARCH_BAND_PX):
+def find_hairline_y(hair_mask_binary, x, start_y, band=HAIRLINE_SEARCH_BAND_PX):
     """
-    Scans a narrow vertical band around column x, top to bottom, and
-    returns the first row where hair coverage crosses
-    HAIRLINE_MIN_ROW_COVERAGE. Requiring a coverage fraction (not just any
-    single hair pixel) avoids a stray misclassified pixel from higher up
-    (e.g. a wisp, or noise) triggering a false hairline.
+    Scans a narrow vertical band around column x, starting at start_y
+    (the raw landmark position -- known to sit in forehead SKIN) and
+    moving UPWARD (decreasing y) until hair coverage crosses
+    HAIRLINE_MIN_ROW_COVERAGE. That first hair-covered row, approached
+    from below, is the hairline boundary.
+
+    NOTE: an earlier version scanned from the TOP of the image downward
+    for the first hair row -- that finds the crown/top of the head, not
+    the hairline. Fixed 2026-09-07 after real-photo testing showed the
+    corrected points landing at the top of the head instead of the
+    forehead hairline.
+
+    Requiring a coverage fraction (not just any single hair pixel) avoids
+    a stray misclassified pixel from triggering a false hairline.
+    Returns None if no hair is found scanning up to row 0.
     """
     h, w = hair_mask_binary.shape[:2]
     x0 = max(0, x - band)
     x1 = min(w, x + band + 1)
     col_band = hair_mask_binary[:, x0:x1]
     row_coverage = col_band.mean(axis=1)
-    rows = np.where(row_coverage >= HAIRLINE_MIN_ROW_COVERAGE)[0]
-    if len(rows) == 0:
-        return None
-    return int(rows[0])
+
+    y = min(int(start_y), h - 1)
+    while y >= 0:
+        if row_coverage[y] >= HAIRLINE_MIN_ROW_COVERAGE:
+            return y
+        y -= 1
+    return None
 
 
 def main():
@@ -138,7 +151,7 @@ def main():
 
             # for hairline IDs, also draw the mask-corrected point in blue
             if idx in HAIRLINE_OVERRIDE_IDS:
-                corrected_y = find_hairline_y(hair_binary, x)
+                corrected_y = find_hairline_y(hair_binary, x, start_y=y)
                 if corrected_y is not None:
                     cv2.circle(image_bgr, (x, corrected_y), 4, (255, 0, 0), -1)
                     cv2.line(image_bgr, (x, y), (x, corrected_y), (255, 0, 0), 1)

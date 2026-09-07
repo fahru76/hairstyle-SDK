@@ -84,24 +84,37 @@ def load_asset_points(csv_path):
     return ids, np.array(pts, dtype=np.float32)
 
 
-def find_hairline_y(hair_mask_binary, x, band=HAIRLINE_SEARCH_BAND_PX):
+def find_hairline_y(hair_mask_binary, x, start_y, band=HAIRLINE_SEARCH_BAND_PX):
     """
-    Scans a narrow vertical band around column x, top to bottom, for the
-    first row where hair coverage crosses HAIRLINE_MIN_ROW_COVERAGE.
+    Scans a narrow vertical band around column x, starting at start_y
+    (the raw landmark position -- known to sit in forehead SKIN) and
+    moving UPWARD (decreasing y) until hair coverage crosses
+    HAIRLINE_MIN_ROW_COVERAGE. That first hair-covered row, approached
+    from below, is the hairline boundary.
+
+    NOTE: an earlier version of this function scanned from the TOP of
+    the image downward for the first hair row -- that's a different
+    point entirely (the crown/top of the head), not the hairline. Fixed
+    2026-09-07 after real-photo testing showed the corrected points
+    landing at the top of the head instead of the forehead hairline.
+
     Requiring a coverage fraction (not just any single hair pixel) avoids
-    a stray misclassified pixel from higher up triggering a false hairline.
-    Returns None if no such row is found (caller should fall back to the
-    raw landmark Y in that case).
+    a stray misclassified pixel from triggering a false hairline.
+    Returns None if no hair is found scanning up to row 0 (caller should
+    fall back to the raw landmark Y in that case).
     """
     h, w = hair_mask_binary.shape[:2]
     x0 = max(0, x - band)
     x1 = min(w, x + band + 1)
     col_band = hair_mask_binary[:, x0:x1]
     row_coverage = col_band.mean(axis=1)
-    rows = np.where(row_coverage >= HAIRLINE_MIN_ROW_COVERAGE)[0]
-    if len(rows) == 0:
-        return None
-    return int(rows[0])
+
+    y = min(int(start_y), h - 1)
+    while y >= 0:
+        if row_coverage[y] >= HAIRLINE_MIN_ROW_COVERAGE:
+            return y
+        y -= 1
+    return None
 
 
 def remove_real_hair(frame_bgr, hair_confidence_mask):
@@ -132,7 +145,7 @@ def warp_and_blend(frame_bgr, wig_rgba, landmark_ids, src_pts, face_landmarks, w
         y = face_landmarks[i].y * h
 
         if i in HAIRLINE_OVERRIDE_IDS and hair_mask_binary is not None:
-            corrected_y = find_hairline_y(hair_mask_binary, int(x))
+            corrected_y = find_hairline_y(hair_mask_binary, int(x), start_y=y)
             if corrected_y is not None:
                 y = corrected_y
             # else: no hair found in that column (e.g. bald spot / bad
