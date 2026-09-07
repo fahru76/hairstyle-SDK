@@ -67,6 +67,9 @@ WIG_CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "wigs
 HAIR_MASK_THRESHOLD = 0.5   # confidence above this counts as "hair" to remove
 HAIR_MASK_DILATE_PX = 6     # grow the mask a bit so hair edges are fully covered
 INPAINT_RADIUS = 8          # cv2.inpaint neighborhood radius
+INPAINT_METHOD = cv2.INPAINT_TELEA  # or cv2.INPAINT_NS -- see tune_hair_removal.py
+# ^ these 4 were unverified guesses; use tune_hair_removal.py to find good
+# values interactively on your own footage rather than editing blind.
 
 # Hairline-correction tuning (see find_hairline_y() and pick_landmarks.py)
 HAIRLINE_OVERRIDE_IDS = {10, 109, 338}   # landmark IDs whose Y gets replaced
@@ -134,7 +137,7 @@ def remove_real_hair(frame_bgr, hair_confidence_mask):
     if not np.any(binary_mask):
         return frame_bgr
 
-    return cv2.inpaint(frame_bgr, binary_mask, INPAINT_RADIUS, cv2.INPAINT_TELEA)
+    return cv2.inpaint(frame_bgr, binary_mask, INPAINT_RADIUS, INPAINT_METHOD)
 
 
 def warp_and_blend(frame_bgr, wig_rgba, landmark_ids, src_pts, face_landmarks, w, h,

@@ -2,6 +2,12 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (8)
+
+- Added `src/wig_overlay/tune_hair_removal.py` — interactive webcam tool (OpenCV trackbars) to tune the hair-removal step live: threshold, dilate px, inpaint radius, inpaint method (Telea/NS), shown side by side as [original | mask | inpainted]. Press 'p' to print current values to paste into `wig_overlay.py`'s constants. The original `HAIR_MASK_THRESHOLD`/`HAIR_MASK_DILATE_PX`/`INPAINT_RADIUS` in `wig_overlay.py` were unverified guesses; this replaces "edit constants blind, re-run, repeat" with immediate visual feedback.
+- `wig_overlay.py` also gained an `INPAINT_METHOD` constant (was hardcoded to `cv2.INPAINT_TELEA`) so a value found via the tuner can be dropped straight in.
+- Not yet run/tuned against real footage by the user — next step.
+
 ## 2026-09-07 (7)
 
 - **Full pipeline confirmed working end-to-end on real webcam footage** (~10s test clip). All pieces validated together for the first time:

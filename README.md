@@ -35,9 +35,10 @@ hairstyle-SDK/
     │   ├── recolor_image.py    # static image hair recoloring
     │   └── recolor_webcam.py   # real-time webcam hair recoloring
     └── wig_overlay/
-        ├── pick_landmarks.py    # visually verify face landmark IDs for anchors
-        ├── annotate_asset.py    # click-anchor points on a wig PNG -> CSV
-        └── wig_overlay.py       # runtime: homography warp + blend wig onto webcam feed
+        ├── pick_landmarks.py      # visually verify face landmark IDs for anchors
+        ├── annotate_asset.py      # click-anchor points on a wig PNG -> CSV
+        ├── tune_hair_removal.py   # interactive sliders for hair-removal quality
+        └── wig_overlay.py         # runtime: homography warp + blend wig onto webcam feed
 ```
 
 ## Quick start
