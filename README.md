@@ -46,11 +46,18 @@ hairstyle-SDK/
 pip install -r requirements.txt
 bash models/download_models.sh
 
-# hair color try-on (static image)
+# hair color try-on (static image; needs an input.jpg in the repo root)
 python src/hair_color/recolor_image.py
 
 # hair color try-on (webcam, real-time)
 python src/hair_color/recolor_webcam.py
+```
+
+**Windows (PowerShell) note:** `models/download_models.sh` is a bash script — it won't run as-is in PowerShell/CMD without Git Bash or WSL. Also, PowerShell aliases `curl` to `Invoke-WebRequest`, which doesn't accept curl's `-L -o` flags. Either use `curl.exe` explicitly, or download the models directly:
+
+```powershell
+curl.exe -L -o models\hair_segmenter.tflite https://storage.googleapis.com/mediapipe-models/image_segmenter/hair_segmenter/float32/latest/hair_segmenter.tflite
+curl.exe -L -o models\face_landmarker.task https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
 ```
 
 Wig-overlay (hairstyle shape change) needs manual setup per asset — see `src/wig_overlay/` and `AGENTS.md` for the pipeline.

@@ -2,6 +2,12 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (3)
+
+- **Confirmed working on real hardware**: `src/hair_color/recolor_image.py` tested on a real photo (Windows, Python 3.x venv). Hair color changed cleanly (black → dark burgundy), edges clean at the hairline, original texture/shading preserved as intended. First real-world validation of anything in this repo.
+- Windows testing note: PowerShell aliases `curl` to `Invoke-WebRequest`, which doesn't accept curl-style flags (`-L -o`). Use `curl.exe` explicitly or `Invoke-WebRequest -Uri ... -OutFile ...` instead. `models/download_models.sh` itself needs Git Bash/WSL to run as-is on Windows.
+- Next: `recolor_webcam.py` (real-time), then `pick_landmarks.py` + `wig_overlay.py`.
+
 ## 2026-09-07 (2)
 
 - `src/wig_overlay/wig_overlay.py` now removes real hair before blending the wig: runs `hair_segmenter` each frame alongside `face_landmarker`, thresholds + dilates the confidence mask, and fills it with `cv2.inpaint` (Telea). Tunable via `HAIR_MASK_THRESHOLD`, `HAIR_MASK_DILATE_PX`, `INPAINT_RADIUS` constants at the top of the file.
