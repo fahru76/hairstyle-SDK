@@ -30,6 +30,17 @@ KNOWN LIMITATIONS (see AGENTS.md / PROGRESS.md):
       frame is heavier than either alone -- expect lower FPS than
       src/hair_color/recolor_webcam.py. Consider VIDEO running mode or
       downscaling the frame before segmentation if this is too slow.
+    - Hairline anchor points (IDs 10/109/338) do NOT use the raw
+      face_landmarker position -- confirmed by real testing that those
+      landmarks sit mid-forehead, well below the actual hairline (MediaPipe's
+      face mesh doesn't extend into hair-covered area; landmark 10 is a fixed
+      anatomical proportion, not a hair detection). Instead their X comes
+      from the landmark but their Y is corrected by scanning the
+      hair_segmenter mask upward at that X for where hair pixels actually
+      start (see find_hairline_y()). Temple (127/356) and chin (152) were
+      visually verified accurate and are used as raw landmarks. See
+      pick_landmarks.py to visualize the correction before trusting it on a
+      new face/asset.
 """
 
 import os
@@ -57,6 +68,11 @@ HAIR_MASK_THRESHOLD = 0.5   # confidence above this counts as "hair" to remove
 HAIR_MASK_DILATE_PX = 6     # grow the mask a bit so hair edges are fully covered
 INPAINT_RADIUS = 8          # cv2.inpaint neighborhood radius
 
+# Hairline-correction tuning (see find_hairline_y() and pick_landmarks.py)
+HAIRLINE_OVERRIDE_IDS = {10, 109, 338}   # landmark IDs whose Y gets replaced
+HAIRLINE_SEARCH_BAND_PX = 6
+HAIRLINE_MIN_ROW_COVERAGE = 0.6
+
 
 def load_asset_points(csv_path):
     ids, pts = [], []
@@ -66,6 +82,26 @@ def load_asset_points(csv_path):
             ids.append(int(row["landmark_id"]))
             pts.append([float(row["x"]), float(row["y"])])
     return ids, np.array(pts, dtype=np.float32)
+
+
+def find_hairline_y(hair_mask_binary, x, band=HAIRLINE_SEARCH_BAND_PX):
+    """
+    Scans a narrow vertical band around column x, top to bottom, for the
+    first row where hair coverage crosses HAIRLINE_MIN_ROW_COVERAGE.
+    Requiring a coverage fraction (not just any single hair pixel) avoids
+    a stray misclassified pixel from higher up triggering a false hairline.
+    Returns None if no such row is found (caller should fall back to the
+    raw landmark Y in that case).
+    """
+    h, w = hair_mask_binary.shape[:2]
+    x0 = max(0, x - band)
+    x1 = min(w, x + band + 1)
+    col_band = hair_mask_binary[:, x0:x1]
+    row_coverage = col_band.mean(axis=1)
+    rows = np.where(row_coverage >= HAIRLINE_MIN_ROW_COVERAGE)[0]
+    if len(rows) == 0:
+        return None
+    return int(rows[0])
 
 
 def remove_real_hair(frame_bgr, hair_confidence_mask):
@@ -88,11 +124,24 @@ def remove_real_hair(frame_bgr, hair_confidence_mask):
     return cv2.inpaint(frame_bgr, binary_mask, INPAINT_RADIUS, cv2.INPAINT_TELEA)
 
 
-def warp_and_blend(frame_bgr, wig_rgba, landmark_ids, src_pts, face_landmarks, w, h):
-    dst_pts = np.array(
-        [[face_landmarks[i].x * w, face_landmarks[i].y * h] for i in landmark_ids],
-        dtype=np.float32,
-    )
+def warp_and_blend(frame_bgr, wig_rgba, landmark_ids, src_pts, face_landmarks, w, h,
+                    hair_mask_binary=None):
+    dst_pts = []
+    for i in landmark_ids:
+        x = face_landmarks[i].x * w
+        y = face_landmarks[i].y * h
+
+        if i in HAIRLINE_OVERRIDE_IDS and hair_mask_binary is not None:
+            corrected_y = find_hairline_y(hair_mask_binary, int(x))
+            if corrected_y is not None:
+                y = corrected_y
+            # else: no hair found in that column (e.g. bald spot / bad
+            # lighting) -- fall back to the raw (imprecise) landmark Y
+            # rather than failing the whole overlay.
+
+        dst_pts.append([x, y])
+
+    dst_pts = np.array(dst_pts, dtype=np.float32)
 
     # need >=4 non-collinear points for homography
     H, status = cv2.findHomography(src_pts, dst_pts, method=0)
@@ -164,15 +213,19 @@ def main():
             face_result = landmarker.detect(mp_image)
 
             if face_result.face_landmarks:
-                # 1) remove real hair first
                 hair_result = segmenter.segment(mp_image)
                 hair_mask = hair_result.confidence_masks[1].numpy_view().astype(np.float32)
+                hair_mask_binary = (hair_mask > HAIR_MASK_THRESHOLD).astype(np.uint8)
+
+                # 1) remove real hair first
                 frame = remove_real_hair(frame, hair_mask)
 
-                # 2) then warp + blend the wig on top
+                # 2) then warp + blend the wig on top (hairline anchors
+                #    corrected against the same mask, see find_hairline_y)
                 face_landmarks = face_result.face_landmarks[0]
                 frame = warp_and_blend(
-                    frame, wig_rgba, landmark_ids, src_pts, face_landmarks, w, h
+                    frame, wig_rgba, landmark_ids, src_pts, face_landmarks, w, h,
+                    hair_mask_binary=hair_mask_binary,
                 )
 
             cv2.imshow("Hairstyle Try-On", frame)

@@ -2,6 +2,12 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (4)
+
+- **Found + fixed a real bug via testing**: `pick_landmarks.py` output on a real photo showed landmarks 10/109/338 sitting clearly mid-forehead, not at the hairline (visible gap between the red dots and where hair actually starts). Root cause: MediaPipe's face mesh doesn't extend into hair-covered area at all — landmark 10 is a fixed anatomical proportion relative to eyes/eyebrows, not a hairline detection, so it's systematically off for any forehead height that differs from the model's template. Temple (127/356) and chin (152) were confirmed accurate in the same test.
+- Fix: `find_hairline_y()` added to both `pick_landmarks.py` and `wig_overlay.py` — keeps the landmark's X, replaces its Y by scanning the `hair_segmenter` confidence mask upward at that X for where hair pixels actually start (row-coverage threshold to avoid stray-pixel false positives, falls back to the raw landmark Y if no hair is found in that column). `pick_landmarks.py` now draws both the raw (red) and corrected (blue) points so the fix can be visually verified before trusting it.
+- Not yet re-tested on real hardware after this change — next step is to re-run `pick_landmarks.py` and confirm the blue points actually land on the hairline.
+
 ## 2026-09-07 (3)
 
 - **Confirmed working on real hardware**: `src/hair_color/recolor_image.py` tested on a real photo (Windows, Python 3.x venv). Hair color changed cleanly (black → dark burgundy), edges clean at the hairline, original texture/shading preserved as intended. First real-world validation of anything in this repo.
