@@ -2,6 +2,17 @@
 
 Running status log. Newest entries on top.
 
+## 2026-09-07 (7)
+
+- **Full pipeline confirmed working end-to-end on real webcam footage** (~10s test clip). All pieces validated together for the first time:
+  - Face tracking stable across frames, no jitter/misalignment as the head moves.
+  - Hair removal clean -- no real hair visible poking out from under the wig edges, inpainted area looks like natural skin tone.
+  - Homography warp + blend correctly keeps the face (eyes, nose, mouth) visible through the wig's face-hole, tracking head movement.
+  - Hairline anchor sits at a reasonable position on the forehead (not too high/low).
+  - Placeholder asset unsurprisingly reads as a "swim cap" rather than a hairstyle -- expected, it's just a test ring shape, not a real wig asset.
+- **This closes out pipeline-mechanics testing.** Remaining work is now about asset quality (real hairstyle PNGs) and polish (inpaint tuning, performance), not core functionality bugs.
+- Didn't evaluate FPS/performance numerically from the clip -- worth asking if it felt laggy in person before deciding whether to optimize.
+
 ## 2026-09-07 (6)
 
 - **Hairline fix confirmed working on real photo**: re-ran `pick_landmarks.py` after the scan-direction fix -- blue (corrected) points now land right at the actual hair/forehead boundary, matching visually. Hairline anchor logic is now considered solid.

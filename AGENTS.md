@@ -6,14 +6,14 @@ This file exists so any AI agent (Claude, Codex, etc.) picking up this repo can 
 
 AR hairstyle try-on for an online barbershop app. Two distinct capabilities, don't conflate them:
 
-1. **Hair color change** — fully working. Uses MediaPipe's `hair_segmenter` model to get a confidence mask of hair pixels, then shifts hue/saturation toward a target color in HSV space while preserving the original Value channel (so shading/highlights/texture stay intact).
-2. **Hairstyle (cut/shape) change** — skeleton only, not production-ready. MediaPipe cannot generate new hair geometry; it only segments existing hair. The approach implemented here is a classic AR pattern: anchor a 2D PNG asset (a pre-rendered hairstyle, transparent background) to face landmarks via homography, then warp+blend it onto the live frame each frame.
+1. **Hair color change** — fully working, confirmed on real photo/webcam. Uses MediaPipe's `hair_segmenter` model to get a confidence mask of hair pixels, then shifts hue/saturation toward a target color in HSV space while preserving the original Value channel (so shading/highlights/texture stay intact).
+2. **Hairstyle (cut/shape) change** — pipeline mechanics fully working and confirmed end-to-end on real webcam footage (2026-09-07). MediaPipe cannot generate new hair geometry; it only segments existing hair. The approach implemented here is a classic AR pattern: anchor a 2D PNG asset (a pre-rendered hairstyle, transparent background) to face landmarks via homography, then warp+blend it onto the live frame each frame. **Not production-ready** — the only asset that exists is a placeholder test shape (see below), not a real hairstyle.
 
 ## Current state (see PROGRESS.md for the live log)
 
-- `src/hair_color/` — complete and testable once models are downloaded.
-- `src/wig_overlay/` — landmark picker → asset annotator → runtime overlay, now combined with `hair_segmenter` so real hair is masked out (via `cv2.inpaint`) before the wig PNG is blended on top. Untested on real hardware (no webcam/mediapipe in the sandbox this was written in) — see PROGRESS.md for what still needs verification.
-- `data/wigs/` — has one placeholder procedurally-generated bob-shape test asset (`wig_bob_test.png` / `.csv`, via `generate_sample_wig.py`) for exercising the pipeline before sourcing real hairstyle assets.
+- `src/hair_color/` — complete, confirmed working on real hardware.
+- `src/wig_overlay/` — landmark picker → asset annotator → runtime overlay, combined with `hair_segmenter` so real hair is masked out (via `cv2.inpaint`) before the wig PNG is blended on top. **Confirmed working end-to-end on real webcam footage** — stable tracking, clean hair removal, correct hairline anchoring. What's untested: real hairstyle assets (only the placeholder exists), inpaint quality on long/complex hair, and performance under sustained use.
+- `data/wigs/` — has one placeholder procedurally-generated bob-shape test asset (`wig_bob_test.png` / `.csv`, via `generate_sample_wig.py`) for exercising the pipeline before sourcing real hairstyle assets. Visually it reads as a "swim cap" on real footage since it's just a ring shape, not an actual rendered hairstyle — that's expected, it did its job of validating the pipeline.
 
 ## Design decisions worth knowing before you change things
 
